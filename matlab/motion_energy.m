@@ -5,7 +5,7 @@ function motion_energy(file, thresh)
 %
 % Parameters:   
 %   file - the name of the file
-%
+%   thresh - pixel difference threshold
 
 inputVideo = VideoReader(file);
 nFrames = inputVideo.NumberOfFrames;

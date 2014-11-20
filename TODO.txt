@@ -1,0 +1,54 @@
+TODO:
+
+Kinect Collection: (GET THIS DONE TONIGHT!!!)
+v Collect RGB frames
+v Collect skeletal index information
+v Acheive RGB with skeletal overlay (prove concept given)
+- Acheive MEI with just skeletal index. 
+	- Probably hold image as we draw lines continuously.
+- Have a 3 second delay before collecting data.
+- Collect information for 3s
+		
+
+Kinect Processing:
+
+
+User Interface: (CREATE UI THURSDAY)
+- Create GIF for "processing"
+- Create GIF for our videos instead (helpful for displaying the walk we identify with)
+- Create 'Start' button that will start a 3 second countdown.
+	- Display countdown on UI
+
+- Display RGB information (maybe with skeletal overlay) while collecting information
+- Display RGB information when not collecting information and not processing and not presenting information.
+- Have section to display the "condition" we conclude from our analysis
+- Have a section to display numerical information (stride length, distance knees move vertically, etc)
+
+---------------------------------------
+|           TITLE                     |
+|  ---------------    --------------- |
+|  |             |    |start/restart| |
+|  |   RGB       |    --------------- |
+|  |             |        ---------   |
+|  |             |        | count |   |
+|  |             |        | down  |   |
+|  ---------------        ---------   |
+|				      |
+|  ---------------        ---------   |
+|  |             |        | Info  |   |
+|  |   Result    |        |       |   |
+|  |             |        |       |   |
+|  |             |        |       |   |
+|  |             |        |       |   |
+|  ---------------        ---------   |
+---------------------------------------
+
+
+Classification:
+- 
+
+Data:
+- Make 3s cuts of movements 
+- Create MEI's out of videos.
+
+

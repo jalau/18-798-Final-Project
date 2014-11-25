@@ -28,6 +28,8 @@ dbstop if error
 imaqreset %deletes any image acquisition objects that exsist in memory
 
 %------------Setup-----------------
+nFrame = 50;
+
 colorVid = videoinput('kinect', 1, 'RGB_640x480');
 
 %set depth input (for skeletal data)
@@ -53,7 +55,9 @@ SkeletonConnectionMap = [[1 2]; % Spine
                          [13 14];
                          [14 15];
                          [15 16]];
-    
+
+%initialize blank image
+blank = zeros(480,640, 'uint8');
 %------------------------------------------------
 %setting up record
 %------------------------------------------------
@@ -70,10 +74,13 @@ triggerconfig([colorVid depthVid], 'manual');
 %set the FramePerTrigger property of the VIDEOINPUT objects to 100 to
 %acquire 100 frames per trigger.
 set([colorVid depthVid], 'FramesPerTrigger', 1);
-set([colorVid depthVid], 'TriggerRepeat', inf);
+set([colorVid depthVid], 'TriggerRepeat', nFrame);
 
 %Set data to collect skeleton information
 set(getselectedsource(depthVid), 'TrackingMode', 'Skeleton');
+
+%initialize an array to hold skeletal data (400 frames is approximately 6 seconds):
+skel_frames = zeros(20,2,nFrame);
 
 disp('Video record set-up complete');
 
@@ -84,14 +91,32 @@ disp('Starting Steam');
 
 start([colorVid depthVid]);
 
-himg = figure
+preview(depthVid);
 
-while ishandle(himg)
+pause(1);
+disp('3');
+pause(1);
+disp('2');
+pause(1);
+disp('1');
+pause(1);
+closepreview;
+for x = 1:nFrame
     trigger(depthVid);
     [imgDepth, ~, metaData_Depth] = getdata(depthVid);
     isTracked = metaData_Depth.IsSkeletonTracked;
     nSkeleton = sum(isTracked);
     skeleton = metaData_Depth.JointImageIndices;
+    
+    if nSkeleton == 1
+       for i = 1:6
+          if isTracked(i) == 1
+              skeletonID = i;
+              break;
+          end
+       end
+    end
+    
 %     if nSkeleton > 0
 %         skeletonJoints = metaData_Depth.JointImageIndices(:,:,metaData_Depth.IsSkeletonTracked);
 %         imshow(imgDepth, [0 4096]);
@@ -99,32 +124,52 @@ while ishandle(himg)
 %         plot(skeletonJoints(:,1), skeletonJoints(:,2), '*');
 %         hold off;
 
-    imshow(imgDepth, [0 4096]);
+    imshow(blank);
     hold on;
         
     if nSkeleton > 0
-        while(nSkeleton >0)
-            trigger(depthVid);
-            [imgDepth, ~, metaData_Depth] = getdata(depthVid);
-            isTracked = metaData_Depth.IsSkeletonTracked;
-            nSkeleton = sum(isTracked);
-            skeleton = metaData_Depth.JointImageIndices;    
-            for i = 1:19
-                X1 = [skeleton(SkeletonConnectionMap(i,1),1,isTracked), 
-                       skeleton(SkeletonConnectionMap(i,2),1,isTracked)];
-                Y1 = [skeleton(SkeletonConnectionMap(i,1),2,isTracked),
-                       skeleton(SkeletonConnectionMap(i,2),2,isTracked)];
-                line(X1,Y1, 'LineWidth', 1.5, 'LineStyle', '-', 'Marker', '+', 'Color', 'r');
-            end
-        end
-        %hold off;
+     %draw lines onto plot as well as blank image.   
+       for i = 1:19
+          X1 = [skeleton(SkeletonConnectionMap(i,1),1,skeletonID), 
+                       skeleton(SkeletonConnectionMap(i,2),1,skeletonID)];
+          Y1 = [skeleton(SkeletonConnectionMap(i,1),2,skeletonID),
+                       skeleton(SkeletonConnectionMap(i,2),2,skeletonID)];
+          line(X1,Y1, 'LineWidth', 1.5, 'LineStyle', '-', 'Marker', '+', 'Color', 'r');
+          
+       end
+    %save skeletal data for that particular frame
+    skel_frames(:,:,x) = skeleton(:,:,skeletonID);    
     else
         hold off;
         imshow(imgDepth, [0 4096]);
-    end
+    end 
 end
 
 stop([colorVid depthVid]);
+
+disp('Done collecting, processing information');
+fprintf('Size of skel_frames: %d', size(skel_frames));
+
+%process skeletal information from frames
+for idx=1:nFrame
+    for i = 1:19
+        X1 = [skel_frames(SkeletonConnectionMap(i,1),1,idx), skel_frames(SkeletonConnectionMap(i,2),1,idx)];
+        Y1 = [skel_frames(SkeletonConnectionMap(i,1),2,idx), skel_frames(SkeletonConnectionMap(i,2),2,idx)];
+        if(X1(1) <= 640) && (X1(2) <= 640) && (Y1(1) <= 480) && (Y1(2) <= 480)
+            if(X1(1) > 0) && (X1(2) > 0) && (Y1(1) > 0) && (Y1(2) > 0)
+                x = linspace(X1(1), X1(2), 1000);
+                y = linspace(Y1(1), Y1(2), 1000);
+                index = sub2ind(size(blank),round(y), round(x));
+                %Set the pixels to white.
+                blank(index) = 255; 
+            end
+        end
+    end
+end
+
+disp('Done processing, displaying image');
+imshow(blank);
+
 % 
 % for i= 1:201
 %     %trigger both objects

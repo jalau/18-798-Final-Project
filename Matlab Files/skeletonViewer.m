@@ -34,8 +34,6 @@ function [] = skeletonViewer(skeleton, image, IsSkeletonTracked)
 %    Foot_Right = 20;
 nSkeleton = sum(IsSkeletonTracked);
 
-fprintf('Tracking %d skeletons\n', nSkeleton);
-
 imshow(image, [0 4096]);
 hold on;
 

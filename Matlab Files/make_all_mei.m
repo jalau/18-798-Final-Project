@@ -1,22 +1,22 @@
-%Directory of the files
-d = 'C:\Users\Jeff Lau\SkyDrive\Documents\Classes\18-798\hw4(assign2)\Eigenface\Eigenface\male\*.bmp';
-full_d = 'C:\Users\Jeff Lau\SkyDrive\Documents\Classes\18-798\hw4(assign2)\Eigenface\Eigenface\male\';
-%Get name of the files
-files = dir(d);
-names = {files.name};
-%loop through files (assuming they're all images
-for id = 1:numel(files)
-    %print original name.    
-    %disp(names);
-    %fprintf('original name: %s\n',files(id).name);
-    %fprintf('%d\n', x);
-    %fprintf('new name: %s\n', sprintf('%03d.jpg',id));
-    %rename file
-    fprintf('files: %d', numel(files));
-    newName = fullfile(full_d, sprintf('%03d.bmp',id));
-    oldName = fullfile(full_d, names{id});
-    if(strcmp(newName,oldName) == 0)
-    %fprintf('full file address: %s\n', fullfile(full_d,names{id}));
-        movefile(fullfile(full_d,names{id}) ,newName);
+function make_all_mei()
+
+    %Directory of the files
+    vid_dir = 'C:\Users\Jeff Lau\SkyDrive\Documents\Classes\18-798\final project\18-798-Final-Project\convert_vid';
+    img_dir = 'C:\Users\Jeff Lau\SkyDrive\Documents\Classes\18-798\final project\18-798-Final-Project\Image Files';
+    vids = fullfile(vid_dir, '*.mp4');
+    imgs = fullfile(img_dir, '*.png');
+    %Get name of the files
+    files = dir(vids);
+    names = {files.name};
+
+    %change workin director to video folder
+    cd(vid_dir);
+
+    %loop through files (assuming they're all 480x640 mp4's
+    for id = 1:numel(files)
+        image = motion_energy(names{id}, 100);
+        [~, name, ~] = fileparts(names{id});
+        imwrite(image, fullfile(img_dir, sprintf('%s.png',name)));
     end
+
 end

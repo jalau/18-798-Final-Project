@@ -1,4 +1,4 @@
-function motion_energy(file, thresh)
+function image =  motion_energy(file, thresh)
 % motion energy algorithm
 %
 % motion_energy(file, filter)
@@ -35,9 +35,9 @@ for i = 2:nFrames-1
          end    
     end
     
-    figure(1),subplot(1,2,1),imshow(fr)     
-    title('Input Frame')
-    subplot(1,2,2),imshow(uint8(result)) 
-    title('Motion Energy Image') 
-
+%     figure(1),subplot(1,2,1),imshow(fr)     
+%     title('Input Frame')
+%     subplot(1,2,2),imshow(uint8(result)) 
+%     title('Motion Energy Image') 
+    image = result;
 end

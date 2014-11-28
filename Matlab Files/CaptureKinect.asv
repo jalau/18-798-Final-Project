@@ -30,8 +30,6 @@ imaqreset %deletes any image acquisition objects that exsist in memory
 %------------Setup-----------------
 nFrame = 50;
 
-colorVid = videoinput('kinect', 1, 'RGB_640x480');
-
 %set depth input (for skeletal data)
 depthVid = videoinput('kinect', 2, 'Depth_640x480');
 

@@ -46,11 +46,11 @@ names = {files.name};
 score_threshold = 5;
 height = 480;
 width = 640;
-data_row = zeroes(height);
-data_col = zeroes(width);
-data_collection = zeroes(numel(files));
-img_row = zeroes(height);
-img_col = zeroes(width);
+data_row = zeros(height);
+data_col = zeros(width);
+data_collection = zeros(numel(files));
+img_row = zeros(height);
+img_col = zeros(width);
 
 %score given image.
 [img_row, img_col] = ScoreImage(image, width, height);
@@ -68,16 +68,17 @@ end
 
 
 %Compare scores and determine the winner.
-max = 0;
-max_index = 1;
+min = data_collection(1);
+min_index = 1;
 for id = 1:numel(files);
-    if data_collection(id) > max
-        max = data_collection(id);
-        max_index = id;
+    if data_collection(id) < min
+        min = data_collection(id);
+        min_index = id;
     end
 end
 
-[~, filename, ~] = fileparts(names{max_index});
+[~, filename, ~] = fileparts(names{min_index});
+
 end
 
 function [img_row, img_col] = ScoreImage(image, width, height)
@@ -121,11 +122,10 @@ function score = CompareScore(img_v, data_v, v_size, threshold)
     end
     while (idx_img <= v_size) && (idx_data <= v_size)
        diff = abs(img_v(idx_img) - data_v(idx_data));
-       if diff < threshold
-           score = score + threshold - diff;
-       end
+       score = score + (diff * diff);
        idx_img = idx_img + 1;
        idx_data = idx_data + 1;
     end
+    score = sqrt(score);
 end
 

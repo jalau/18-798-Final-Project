@@ -1,0 +1,140 @@
+function filename = ClassifyWalk(image)
+    %This function looks through a set of motion energy images within our
+    %database and compares scores of row and column vectors. The image with the
+    %best comparison will be returned.
+    %   image - a black and white (or greyscale) image of size 480x640
+    %   filename - 'nothing' or the filename of some MEI and video.
+    %
+    %   Database selection: We will process pictures one at a time in the order
+    %   that the file system as organized them. This procedure can be improved
+    %   later as a standard arises.
+    %   
+    %   Scoring: Rows will be scored based upon how many pixels within the
+    %   vector are white. Columns will be scored the same way. Thus, we will
+    %   have an array of size 640 and another of size 480 of scores for both
+    %   the image passed to us, and the image within our database.
+    %   
+    %   Comparison: We first look for the first non zero value of the two
+    %   vectors we want to compare and starting from there, give points for
+    %   values that are similar within 5 (1 point if we're 5 values off, 2
+    %   points if we're 4 values off, etc). We can potentially set  threshold
+    %   to quicken the process later but for now, we will use this comparison
+    %   for each image and compare scores to determine the best match.
+    %
+    %   Returning: Along with the image score, we will also save the image's
+    %   associated file name.
+
+    %Initialize necessary data structures
+    % nData - The number of images to compare
+    % scorew_threshold - The leniency of comparying sequences and assigning
+    % scores
+    % height - The expected height of the given image and images in the database.
+    % width - The expected width of the given image and images in the database.
+    % data_row - An array to store the scores for a data file
+    % data_col - An array to store the scores for a data file
+    % data_collection - An array to store the comparison scores between the
+    % corresponding data file and the given image.
+    % img_row - An array to store the scores for the given image file
+    % img_col - An array to store the scores for the given image file
+    % vid_dir - The path to the video folder specific for each computer
+    % img_dir - The path to the image folder specific for each  computer
+    % vids - The path to use to retrieve all .mp4 files in the movie folder
+    % imgs - The path to use to retrieve all .png files in the image folder
+    nData = 16;
+    score_threshold = 5;
+    height = 480;
+    width = 640;
+    data_row = zeroes(height);
+    data_col = zeroes(width);
+    data_collection = zeroes(nData);
+    img_row = zeroes(height);
+    img_col = zeroes(width);
+    %paths to the video and image database specific for each computer.
+    vid_dir = 'C:\Users\Jeff Lau\SkyDrive\Documents\Classes\18-798\final project\18-798-Final-Project\Video Files';
+    img_dir = 'C:\Users\Jeff Lau\SkyDrive\Documents\Classes\18-798\final project\18-798-Final-Project\Image Files';
+    vids = fullfile(vid_dir, '*.mp4');
+    imgs = fullfile(img_dir, '*.png');
+
+    %collect scores for image.
+    [img_row, img_col] = Score_Image(image, width, height);
+
+    %Loop through database to find comparisons for all images.
+    files = dir(imgs);
+    for id = 1:nData
+        %get next image
+        cur_img_dir = fullfile(img_dir, files(id).name);
+        cur_img = imread(cur_img_dir);
+
+        [data_row, data_col] = Score_Image(cur_img, width, height);
+
+        %get comparison score to passed in image
+        data_collection(id) = data_collection(id) + Compare_Vectors(img_row, data_row, height, score_threshould);
+        data_collection(id) = data_collection(id) + Compare_Vectors(img_col, data_col, width, score_threshould);
+
+    end
+
+    %Compare scores and determine the winner.
+    max = 0;
+    max_index = 1;
+
+    for index = 1:nData
+        if(data_collection(index) > max)
+           max = data_collection(index)
+           max_index = index;
+        end
+    end
+    
+
+
+end
+
+
+function score = Compare_Vectors(img_v, data_v, v_size, threshould)
+    start_img = 1;
+    start_data = 1;
+    score = 0;
+    %get starting points
+    for idx = 1:v_size
+        if data_v(idx) > 0
+           start_data = idx;
+           break;
+        end
+    end
+    for idx = 1:v_size
+        if img_v(idx) > 0
+           start_img = idx;
+           break;
+        end
+    end
+    
+    %compare vectors from the starting points
+    while start_img <= v_size && start_data <= v_size
+       diff = abs(data_v(start_data) - img_v(start_img));
+       if diff < threshould
+           score = score + (threshould - diff);
+       end
+    end
+    return;
+end
+
+function [row_v, col_v] = Score_Image(image, width, height)
+    row_v = zeros(height);
+    col_v = zeros(width);
+    %Make sure image fits expected size.
+    [row, col] = size(image);
+    if row ~= height || col ~= width
+        disp('The given image does not match with expected dimensions!');
+        return;
+    end
+
+    %collect scores for image.
+    for row = 1:height
+        for col = 1:width
+            if image(row,col) > 0
+                row_v(row) = row_v(row) + 1;
+                col_v(col) = col_v(col) + 1;
+            end
+        end
+    end
+end
+

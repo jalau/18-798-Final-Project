@@ -1,4 +1,4 @@
-function [ ] = CaptureKinect( )
+function [image] = CaptureKinectGUI(handles)
 % CaptureKinect Main function to capture and process kinect video and
 % skeletal data.
 %
@@ -28,9 +28,7 @@ dbstop if error
 imaqreset %deletes any image acquisition objects that exsist in memory
 
 %------------Setup-----------------
-nFrame = 200;
-
-colorVid = videoinput('kinect', 1, 'RGB_640x480');
+nFrame = 50;
 
 %set depth input (for skeletal data)
 depthVid = videoinput('kinect', 2, 'Depth_640x480');
@@ -62,19 +60,16 @@ blank = zeros(480,640, 'uint8');
 %setting up record
 %------------------------------------------------
 
-%Set a video timeout property limit to 50 seconds from
-%www.mathworks.com/matlabcentral/answers/103543-why-do-i-receive-the-error
-% -getdata-timed-out-before-frames-were-available-when-using-getdata-in-im
-set(colorVid, 'Timeout',50);
+%Set a video timeout property limit to 50 seconds 
 set(depthVid, 'Timeout',50);
 
 %set the triggering mode to 'manual'
-triggerconfig([colorVid depthVid], 'manual');
+triggerconfig(depthVid, 'manual');
 
 %set the FramePerTrigger property of the VIDEOINPUT objects to 100 to
 %acquire 100 frames per trigger.
-set([colorVid depthVid], 'FramesPerTrigger', 1);
-set([colorVid depthVid], 'TriggerRepeat', nFrame);
+set(depthVid, 'FramesPerTrigger', 1);
+set(depthVid, 'TriggerRepeat', nFrame);
 
 %Set data to collect skeleton information
 set(getselectedsource(depthVid), 'TrackingMode', 'Skeleton');
@@ -82,24 +77,33 @@ set(getselectedsource(depthVid), 'TrackingMode', 'Skeleton');
 %initialize an array to hold skeletal data (400 frames is approximately 6 seconds):
 skel_frames = zeros(20,2,nFrame);
 
-disp('Video record set-up complete');
+%initialize timer object
+count = 3;
+t = timer('TimerFcn', 'count = count - 1;set(handles.text_count, ''String'', int2str(count));drawnow',...
+          'Period', 1,...
+          'ExecutionMode', 'fixedSpacing',...
+          'TasksToExecute', 3);
 
+set(handles.text_satus, 'String', 'Video record set-up complete');
+drawnow;
 %------------------------------------------------
 %Initiating the aquisition
 %------------------------------------------------
-disp('Starting Steam');
+set(handles.text_satus, 'String', 'Starting Steam');
+drawnow;
 
-start([colorVid depthVid]);
+start(depthVid);
 
-preview(depthVid);
+%Countdown 3 seconds but also display what the kinect sees in the depth
+%camera
+set(handles.text_satus, 'String', 'Starting Countdown');
+drawnow;
 
-pause(1);
-disp('3');
-pause(1);
-disp('2');
-pause(1);
-disp('1');
-pause(1);
+start(t);
+while(count >0)
+    [imgDepth, ~, ~] = getdata(depthVid);
+    imshow(imgDepth);
+end
 
 for x = 1:nFrame
     trigger(depthVid);
@@ -116,13 +120,6 @@ for x = 1:nFrame
           end
        end
     end
-    
-%     if nSkeleton > 0
-%         skeletonJoints = metaData_Depth.JointImageIndices(:,:,metaData_Depth.IsSkeletonTracked);
-%         imshow(imgDepth, [0 4096]);
-%         hold on;
-%         plot(skeletonJoints(:,1), skeletonJoints(:,2), '*');
-%         hold off;
 
     imshow(blank);
     hold on;
@@ -136,51 +133,42 @@ for x = 1:nFrame
                        skeleton(SkeletonConnectionMap(i,2),2,skeletonID)];
           line(X1,Y1, 'LineWidth', 1.5, 'LineStyle', '-', 'Marker', '+', 'Color', 'r');
           
-          %save skeletal data for that particular frame
-          skel_frames(:,:,x) = skeleton(:,:,skeletonID);
-          
-          %display X1 and Y1
        end
+    %save skeletal data for that particular frame
+    skel_frames(:,:,x) = skeleton(:,:,skeletonID);    
     else
         hold off;
         imshow(imgDepth, [0 4096]);
-    end
+    end 
 end
 
-stop([colorVid depthVid]);
+stop(depthVid);
 
-disp('Done collecting, processing information');
-fprintf('Size of skel_frames: %d', size(skel_frames));
+set(handles.text_satus, 'String', 'Done collecting, processing information');
+drawnow;
 
 %process skeletal information from frames
 for idx=1:nFrame
-    X1 = [skel_frames(SkeletonConnectionMap(i,1),1,idx), skel_frames(SkeletonConnectionMap(i,2),1,idx)];
-    Y1 = [skel_frames(SkeletonConnectionMap(i,1),2,idx), skel_frames(SkeletonConnectionMap(i,2),2,idx)];
-    if(X1(1) <= 640) && (X1(2) <= 640) && (Y1(1) <= 480) && (Y1(2) <= 480)
-        if(X1(1) > 0) && (X1(2) > 0) && (Y1(1) > 0) && (Y1(2) > 0)
-            x = linspace(X1(1), X1(2), 1000);
-            y = linspace(Y1(1), Y1(2), 1000);
-            fprintf('x1 is: %d, x2 is %d \n', X1(1), X1(2));
-            fprintf('y1 is: %d, y2 is %d \n', Y1(1), Y1(2));
-            index = sub2ind(size(blank),round(y), round(x));
-            %Set the pixels to white.
-            blank(index) = 255; 
+    for i = 1:19
+        X1 = [skel_frames(SkeletonConnectionMap(i,1),1,idx), skel_frames(SkeletonConnectionMap(i,2),1,idx)];
+        Y1 = [skel_frames(SkeletonConnectionMap(i,1),2,idx), skel_frames(SkeletonConnectionMap(i,2),2,idx)];
+        if(X1(1) <= 640) && (X1(2) <= 640) && (Y1(1) <= 480) && (Y1(2) <= 480)
+            if(X1(1) > 0) && (X1(2) > 0) && (Y1(1) > 0) && (Y1(2) > 0)
+                x = linspace(X1(1), X1(2), 1000);
+                y = linspace(Y1(1), Y1(2), 1000);
+                index = sub2ind(size(blank),round(y), round(x));
+                %Set the pixels to white.
+                blank(index) = 255; 
+            end
         end
     end
 end
 
-disp('Done processing, displaying image');
+set(handles.text_satus, 'String', 'Done processing, displaying image');
+drawnow;
+
 imshow(blank);
 
-% 
-% for i= 1:201
-%     %trigger both objects
-%     trigger([colorVid depthVid]);
-%     [imgColor, ~, metaData_Color] = getdata(colorVid);
-%     [imgDepth, ~, metaData_Depth] = getdata(depthVid);
-%     skeletonViewer(metaData_Depth.JointImageIndices, imgColor, metaData_Depth.IsSkeletonTracked);
-% end
-
-
+image = blank;
 end
 

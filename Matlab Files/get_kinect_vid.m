@@ -21,4 +21,4 @@ start(depthVid);
 
 
 %Get Skeletal Data
-function [] = skeletonViewer(skeleton, image, nSkeleton)
+%function [] = skeletonViewer(skeleton, image, nSkeleton)

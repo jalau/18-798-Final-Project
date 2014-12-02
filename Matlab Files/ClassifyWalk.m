@@ -1,4 +1,4 @@
-function filename = ClassifyWalk(image)
+function [filename, resulting_image, distance] = ClassifyWalk(image)
 %This function looks through a set of motion energy images within our
 %database and compares scores of row and column vectors. The image with the
 %best comparison will be returned.
@@ -78,7 +78,8 @@ for id = 1:numel(files);
 end
 
 [~, filename, ~] = fileparts(names{min_index});
-
+resulting_image = imread(names{min_index});
+distance = min;
 end
 
 function [img_row, img_col] = ScoreImage(image, width, height)
@@ -86,7 +87,7 @@ function [img_row, img_col] = ScoreImage(image, width, height)
     img_col = zeros(width);
         
     %Make sure image fits expected size.
-    [row, col] = size(image);
+    [row, col, ~] = size(image);
     if row ~= height || col ~= width
         disp('The given image does not match with expected dimensions!');
         return;

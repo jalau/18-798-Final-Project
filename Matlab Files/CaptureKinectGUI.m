@@ -1,4 +1,4 @@
-function [image] = CaptureKinectGUI(handles)
+function [image, stride, arm, knee_r, knee_l] = CaptureKinectGUI(handles)
 % CaptureKinect Main function to capture and process kinect video and
 % skeletal data.
 %
@@ -56,6 +56,16 @@ SkeletonConnectionMap = [[1 2]; % Spine
 
 %initialize blank image
 blank = zeros(480,640, 'uint8');
+
+%initialize variables for statistic collection
+stride_max = 0;
+stride_avg = 0;
+arm_max = 0;
+arm_avg = 0;
+knee_l_max = 0;
+knee_l_min = 0;
+knee_r_max = 0;
+knee_r_min = 0;
 %------------------------------------------------
 %setting up record
 %------------------------------------------------
@@ -69,7 +79,7 @@ triggerconfig(depthVid, 'manual');
 %set the FramePerTrigger property of the VIDEOINPUT objects to 100 to
 %acquire 100 frames per trigger.
 set(depthVid, 'FramesPerTrigger', 1);
-set(depthVid, 'TriggerRepeat', nFrame);
+set(depthVid, 'TriggerRepeat', inf);
 
 %Set data to collect skeleton information
 set(getselectedsource(depthVid), 'TrackingMode', 'Skeleton');
@@ -78,32 +88,36 @@ set(getselectedsource(depthVid), 'TrackingMode', 'Skeleton');
 skel_frames = zeros(20,2,nFrame);
 
 %initialize timer object
-count = 3;
-t = timer('TimerFcn', 'count = count - 1;set(handles.text_count, ''String'', int2str(count));drawnow',...
-          'Period', 1,...
-          'ExecutionMode', 'fixedSpacing',...
-          'TasksToExecute', 3);
+count_t = 3;
+% t = timer('TimerFcn', '',...
+%           'Period', 1,...
+%           'ExecutionMode', 'fixedSpacing',...
+%           'TasksToExecute', 3);
 
-set(handles.text_satus, 'String', 'Video record set-up complete');
+set(handles.text_status, 'String', 'Video record set-up complete');
 drawnow;
 %------------------------------------------------
 %Initiating the aquisition
 %------------------------------------------------
-set(handles.text_satus, 'String', 'Starting Steam');
+set(handles.text_status, 'String', 'Starting Steam');
 drawnow;
 
 start(depthVid);
 
 %Countdown 3 seconds but also display what the kinect sees in the depth
 %camera
-set(handles.text_satus, 'String', 'Starting Countdown');
+set(handles.text_status, 'String', 'Starting Countdown');
 drawnow;
 
-start(t);
-while(count >0)
-    [imgDepth, ~, ~] = getdata(depthVid);
-    imshow(imgDepth);
+%start(t);
+while(count_t >0)
+    set(handles.text_count, 'String', int2str(count_t));
+    drawnow;
+    count_t = count_t - 1;
+    pause(1);
 end
+
+set(handles.text_count, 'String', ' ');
 
 for x = 1:nFrame
     trigger(depthVid);
@@ -144,8 +158,12 @@ end
 
 stop(depthVid);
 
-set(handles.text_satus, 'String', 'Done collecting, processing information');
+set(handles.text_status, 'String', 'Processing information');
 drawnow;
+
+%Initialize knee_min values 
+knee_l_min = skel_frames(6,2,1);
+knee_r_min = skel_frames(10,2,1);
 
 %process skeletal information from frames
 for idx=1:nFrame
@@ -162,13 +180,50 @@ for idx=1:nFrame
             end
         end
     end
+    
+    %Compile information on statistics
+    %stride length
+    diff = abs(skel_frames(16,1,idx) - skel_frames(20,1,idx));
+    if(stride_max < diff)
+       stride_max = diff;
+    end
+    stride_avg = stride_avg + diff;
+    
+    %arm range of motion
+    diff = abs(skel_frames(6,1,idx) - skel_frames(10,1,idx));
+    if(arm_max < diff)
+       arm_max = diff;
+    end
+    arm_avg = arm_avg + diff;
+    
+    %knee range of motion
+    if(knee_l_max < skel_frames(6,2,idx))
+        knee_l_max = skel_frames(6,2,idx);
+    else if (knee_l_min > skel_frames(6,2,idx))
+        knee_l_min = skel_frames(6,2,idx);
+        end
+    end
+    
+    if(knee_r_max < skel_frames(10,2,idx))
+        knee_r_max = skel_frames(10,2,idx);
+    else if (knee_r_min > skel_frames(10,2,idx))
+        knee_r_min = skel_frames(10,2,idx);
+        end
+    end
 end
 
-set(handles.text_satus, 'String', 'Done processing, displaying image');
+stride_avg = stride_avg/nFrame;
+arm_avg = arm_avg/nFrame;
+
+stride = 100*(stride_max/stride_avg);
+arm = 100*(arm_max/arm_avg);
+knee_r = 100*((knee_r_max - knee_r_min)/knee_r_max);
+knee_l = 100*((knee_l_max - knee_l_min)/knee_l_max);
+image = blank;
+
+set(handles.text_status, 'String', 'Done processing, displaying image');
 drawnow;
 
-imshow(blank);
-
-image = blank;
 end
+
 

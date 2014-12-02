@@ -1,4 +1,4 @@
-function [ ] = CaptureKinect( )
+function [image, stride, arm, knee_r, knee_l] = CaptureKinect( )
 % CaptureKinect Main function to capture and process kinect video and
 % skeletal data.
 %
@@ -31,6 +31,7 @@ imaqreset %deletes any image acquisition objects that exsist in memory
 nFrame = 50;
 
 %set depth input (for skeletal data)
+colorVid = videoinput('kinect', 1, 'RGB_640x480');
 depthVid = videoinput('kinect', 2, 'Depth_640x480');
 
 %Set up connection map to connect joints 
@@ -56,6 +57,16 @@ SkeletonConnectionMap = [[1 2]; % Spine
 
 %initialize blank image
 blank = zeros(480,640, 'uint8');
+
+%initialize variables for statistic collection
+stride_max = 0;
+stride_avg = 0;
+arm_max = 0;
+arm_avg = 0;
+knee_l_max = 0;
+knee_l_min = 0;
+knee_r_max = 0;
+knee_r_min = 0;
 %------------------------------------------------
 %setting up record
 %------------------------------------------------
@@ -146,8 +157,11 @@ end
 stop([colorVid depthVid]);
 
 disp('Done collecting, processing information');
-fprintf('Size of skel_frames: %d', size(skel_frames));
+%fprintf('Size of skel_frames: %d', size(skel_frames));
 
+%Initialize knee_min values 
+knee_l_min = skel_frames(6,2,1);
+knee_r_min = skel_frames(10,2,1);
 %process skeletal information from frames
 for idx=1:nFrame
     for i = 1:19
@@ -163,7 +177,45 @@ for idx=1:nFrame
             end
         end
     end
+    
+    %Compile information on statistics
+    %stride length
+    diff = abs(skel_frames(16,1,idx) - skel_frames(20,1,idx));
+    if(stride_max < diff)
+       stride_max = diff;
+    end
+    stride_avg = stride_avg + diff;
+    
+    %arm range of motion
+    diff = abs(skel_frames(6,1,idx) - skel_frames(10,1,idx));
+    if(arm_max < diff)
+       arm_max = diff;
+    end
+    arm_avg = arm_avg + diff;
+    
+    %knee range of motion
+    if(knee_l_max < skel_frames(6,2,idx))
+        knee_l_max = skel_frames(6,2,idx);
+    else if (knee_l_min > skel_frames(6,2,idx))
+        knee_l_min = skel_frames(6,2,idx);
+        end
+    end
+    
+    if(knee_r_max < skel_frames(10,2,idx))
+        knee_r_max = skel_frames(10,2,idx);
+    else if (knee_r_min > skel_frames(10,2,idx))
+        knee_r_min = skel_frames(10,2,idx);
+        end
+    end
 end
+
+stride_avg = stride_avg/nFrame;
+arm_avg = arm_avg/nFrame;
+
+stride = 100*(stride_max/stride_avg);
+arm = 100*(arm_max/arm_avg);
+knee_r = 100*(knee_r_max/knee_r_min);
+knee_l = 100*(knee_l_max/knee_l_min);
 
 disp('Done processing, displaying image');
 imshow(blank);
@@ -176,8 +228,8 @@ imshow(blank);
 %     [imgDepth, ~, metaData_Depth] = getdata(depthVid);
 %     skeletonViewer(metaData_Depth.JointImageIndices, imgColor, metaData_Depth.IsSkeletonTracked);
 % end
- img_dir = 'C:\Users\Jeff Lau\SkyDrive\Documents\Classes\18-798\final project\18-798-Final-Project\Image Files';
- imwrite(blank, fullfile(img_dir, 'kinect_img.png'));
-
+%img_dir = 'C:\Users\Jeff Lau\SkyDrive\Documents\Classes\18-798\final project\18-798-Final-Project\Image Files';
+%imwrite(blank, fullfile(img_dir, 'kinect_img.png'));
+image = blank;
 end
 

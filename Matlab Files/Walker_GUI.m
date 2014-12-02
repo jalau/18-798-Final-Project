@@ -22,7 +22,7 @@ function varargout = Walker_GUI(varargin)
 
 % Edit the above text to modify the response to help Walker_GUI
 
-% Last Modified by GUIDE v2.5 25-Nov-2014 13:53:23
+% Last Modified by GUIDE v2.5 02-Dec-2014 03:05:42
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -90,25 +90,29 @@ function pushbutton1_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-%initialize blank image
-blank = zeros(480,640, 'uint8');
+    %initialize blank image
+    blank = zeros(480,640, 'uint8');
 
-%clear both axes initially.
-axes(handles.axes_result);
-imshow(blank);
-axes(handles.axes_kinect);
-imshow(blank);
+    %clear both axes initially.
+    axes(handles.axes_result);
+    imshow(blank);
+    axes(handles.axes_kinect);
+    imshow(blank);
 
-%Assume result is the file name of the resulting movie file.
-image = CaptureKinectGUI(handles);
-result = ClassifyWalk(image);
-
-%display results within Status and the second axes.
-set(handles.text_walk_id, 'String', result);
-axes.(handles.axes_result);
-implay(result);
-
-
-
-
-
+    %Assume result is the file name of the resulting movie file.
+    [image, stride, arm, knee_r, knee_l] = CaptureKinectGUI(handles);
+    imshow(image);
+    [result, res_img] = ClassifyWalk(image);
+    
+    %display results within Status and the second axes.
+    if(strcmp(result, 'Image_Not_Recognized') == 0)
+        set(handles.text_stride, 'String', num2str(stride));
+        set(handles.text_swing, 'String', num2str(arm));
+        set(handles.text_knee_r, 'String', num2str(knee_r));
+    set(handles.text_knee_l, 'String', num2str(knee_l));
+    end
+    set(handles.text_walk_id, 'String', result);
+    drawnow;
+    
+    axes(handles.axes_result);
+    imshow(res_img);

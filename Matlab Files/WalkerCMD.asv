@@ -1,0 +1,35 @@
+function WalkerCMD()
+    vid_dir = 'C:\Users\Jeff Lau\SkyDrive\Documents\Classes\18-798\final project\18-798-Final-Project\convert_vid';
+    %initialize blank image
+    blank = zeros(480,640, 'uint8');
+
+    %Assume result is the file name of the resulting movie file.
+    image = CaptureKinect();
+    result = ClassifyWalk(image);
+
+    %display results within Status and the second axes.
+    fprintf('%s\n',result);
+    if(strcmp(result, 'Image_Not_Recognized') == 0)
+        axes(handles.axes_result);
+        full_video = fullfile(vid_dir, sprintf('%s.mp4',result));
+        play_video(full_video);
+    end
+    
+     figure(1),subplot(1,2,1),imshow(fr)     
+     title('Input Frame')
+     subplot(1,2,2),imshow(uint8(image)) 
+     title('Motion Energy Image') 
+
+end
+
+function play_video(vid_dir)
+    inputObj = VideoReader(path);
+    nframes = inputObj.NumberofFrames;
+    %loop 3 times
+    for x = 1:3
+        for i = 2:nframes -1
+           fr = read(inputObj, i);
+           imshow(fr);
+        end
+    end    
+end

@@ -89,6 +89,8 @@ function pushbutton1_Callback(hObject, eventdata, handles)
 % hObject    handle to pushbutton1 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+    %code directory
+    code_dir = 'C:\Users\Jeff Lau\SkyDrive\Documents\Classes\18-798\final project\18-798-Final-Project\Matlab Files\GUI';
 
     %initialize blank image
     blank = zeros(480,640, 'uint8');
@@ -109,10 +111,12 @@ function pushbutton1_Callback(hObject, eventdata, handles)
         set(handles.text_stride, 'String', num2str(stride));
         set(handles.text_swing, 'String', num2str(arm));
         set(handles.text_knee_r, 'String', num2str(knee_r));
-    set(handles.text_knee_l, 'String', num2str(knee_l));
+        set(handles.text_knee_l, 'String', num2str(knee_l));
     end
     set(handles.text_walk_id, 'String', result);
     drawnow;
     
     axes(handles.axes_result);
     imshow(res_img);
+    cd(code_dir);
+    

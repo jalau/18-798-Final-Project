@@ -125,7 +125,7 @@ for x = 1:nFrame
     isTracked = metaData_Depth.IsSkeletonTracked;
     nSkeleton = sum(isTracked);
     skeleton = metaData_Depth.JointImageIndices;
-    
+    skeletonID = 1;
     if nSkeleton == 1
        for i = 1:6
           if isTracked(i) == 1
@@ -141,7 +141,7 @@ for x = 1:nFrame
     if nSkeleton > 0
      %draw lines onto plot as well as blank image.   
        for i = 1:19
-          X1 = [skeleton(SkeletonConnectionMap(i,1),1,skeletonID), 
+            X1 = [skeleton(SkeletonConnectionMap(i,1),1,skeletonID), 
                        skeleton(SkeletonConnectionMap(i,2),1,skeletonID)];
           Y1 = [skeleton(SkeletonConnectionMap(i,1),2,skeletonID),
                        skeleton(SkeletonConnectionMap(i,2),2,skeletonID)];
